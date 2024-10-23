@@ -1,0 +1,1 @@
+alias="awk '/open/ {print $4}' $2 | cut -d. -f1-3 | sed 's/$/.0\/24/' | sort -u"
