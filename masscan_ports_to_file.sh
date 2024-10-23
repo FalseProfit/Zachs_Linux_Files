@@ -10,8 +10,8 @@ TEMP_RANDOM=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
 
 # Scan each port asynchronously
 for port in "${PORTS[@]}"; do
-  echo "Scanning for open port $port..."
-  masscan $IP_RANGE -p$port --rate=75 >> masscan_temp$TEMP_RANDOM$port.txt &
+	echo "Scanning for open port $port..."
+ 	masscan $IP_RANGE -p$port --rate=75 >> masscan_temp$TEMP_RANDOM$port.txt &
 done
 
 # Wait for all background scans to finish
@@ -19,8 +19,8 @@ wait
 
 # Extract and print the unique IP addresses with open ports
 for port in "${PORTS[@]}"; do
-  cat masscan_temp$port.txt | awk '/open/ {print $6}' | sort -u >> masscan_port$port.txt
-  # Clean up the temporary file
-  rm masscan_temp$TEMP_RANDOM$port.txt
+	cat masscan_temp$port.txt | awk '/open/ {print $6}' | sort -u >> masscan_port$port.txt
+ 	# Clean up the temporary file
+  	rm masscan_temp$TEMP_RANDOM$port.txt
 done
 
