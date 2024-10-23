@@ -1,17 +1,14 @@
 #!/bin/bash
 
 # Specify the range of IP addresses to scan and the list of ports
-IP_RANGE="192.168.1.0/24"
+IP_FILE=$1
 PORTS=(22 80 443 8080 3306 3389 445 5985 389 636)  # Add or remove ports as needed
 TEMP_RANDOM=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 10 | head -n 1)
-
-# Create a temporary file to store results
-#RESULTS_FILE=$(mktemp)
 
 # Scan each port asynchronously
 for port in "${PORTS[@]}"; do
 	echo "Scanning for open port $port..."
- 	masscan $IP_RANGE -p$port --rate=75 >> masscan_temp$TEMP_RANDOM$port.txt &
+ 	masscan -iL $IP_FILE -p $port --rate=75 >> masscan_temp$TEMP_RANDOM$port.txt &
 done
 
 # Wait for all background scans to finish
