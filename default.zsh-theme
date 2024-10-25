@@ -1,3 +1,5 @@
+#Location: $HOME/.oh-my-zsh/themes/default.zsh-theme
+
 if [ "$EUID" -eq 0 ]; then 
 SYMBOL="#";
 else
