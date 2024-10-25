@@ -110,6 +110,8 @@ export GOROOT=/usr/lib/go
 export GOPATH=$HOME/go
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
+set-option -g history-limit 999999
+
 
 alias slash24="cut -d. -f1-3 | sed 's/$/.0\/24/'"
 alias mount-shares="/usr/bin/vmhgfs-fuse .host:/ /root/shares -o subtype=vmhgfs-ffuse,allow_other"
