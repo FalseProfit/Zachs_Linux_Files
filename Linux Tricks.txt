@@ -1,0 +1,2 @@
+#Match multiple strings but keep part of the matched string in the final substitution. the \1 means to keep testing1 or testing2 when matched. So, if testing1=true is found, it will change to testing1=false.
+sed 's/^\(testing1\|testing2\)=true/\1=false/' temp.txt
