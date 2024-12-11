@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/zsh
 #TODO:
-- Add proxy support
+# Add proxy support
 
 
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
