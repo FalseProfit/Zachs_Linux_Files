@@ -14,7 +14,7 @@ mv Zach_Linux_Setup_Files/.zshrc ~/.zshrc
 mv Zach_Linux_Setup_Files/zach.zsh-theme ~/.oh-my-zsh/themes/zach.zsh-theme
 
 #Apply changes to zsh
-source ~/.zshrc
+#source ~/.zshrc
 
 echo -e "You should now spawn a new ZSH session by typing:\nzsh"
 echo "Consider deleting the tmux config file at /etc/tmux.conf or overwriting it with the new file at ~/.tmux.conf"
