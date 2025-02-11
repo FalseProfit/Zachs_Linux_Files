@@ -120,3 +120,4 @@ alias ipgrepLine="grep -E '([^.]|^)([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.(
 alias sourcezshrc="source ~/.zshrc"
 alias pythonhttpserver="python3 -m http.server --bind 127.0.0.1"
 alias postman="/opt/Postman/Postman > /dev/null 2>&1 &"
+alias readablehistory="sed 's/;/,,,,,/' ~/.zsh_history | awk -F',,,,,' '{cmd=$2; sub(/^: /, "", $1); split($1, t, ":"); print strftime("%Y-%m-%d %H:%M:%S", t[1]) " - " cmd}'"
