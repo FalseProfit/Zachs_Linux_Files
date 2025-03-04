@@ -106,7 +106,7 @@ source $ZSH/oh-my-zsh.sh
 # Created by `pipx` on 2024-08-06 15:41:43
 export PATH="$PATH:/root/.local/bin"
 export PATH="$PATH:/opt"
-export PATH="$PATH:/root/Scripts
+export PATH="$PATH:/root/Scripts"
 
 export GOROOT=/usr/lib/go
 export GOPATH=$HOME/go
