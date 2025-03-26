@@ -41,6 +41,7 @@ run_ssh_command() {
 }
 
 # Run the SSH commands with error checking
+echo "***Prepare to paste the SSH password multiple times***"
 # Allow the remote host to proxychains through localhost
 echo "Creating SSH tunnel to allow proxychains through localhost:"
 run_ssh_command ssh -fND $D_PORT root@127.0.0.1
