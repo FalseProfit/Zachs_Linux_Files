@@ -2,6 +2,13 @@
 #TODO:
 # Add proxy support
 
+#Check if zsh is installed
+if [ ! -f /bin/zsh ]; then
+  echo "ZSH is not installed. Please install ZSH before continuing. Exiting..."
+  exit 1
+fi
+
+
 #Install oh-my-zsh if it is not already installed
 if [ ! -d ~/.oh-my-zsh ]; then
   echo "***Installing oh-my-zsh. If network access is blocked, install manually via proxychains or similar."
