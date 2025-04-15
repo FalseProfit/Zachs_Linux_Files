@@ -6,7 +6,7 @@ local user_symbol='%(!.#.$)'
 local current_dir="%B%{$fg[blue]%}%~ %{$reset_color%}"
 local conda_prompt='$(conda_prompt_info)'
 local user_IP="%{$fg_bold[white]%}$(hostname -I | cut -d " " -f 1) "
-local date_time="%{$fg_bold[green]%}%D %T "
+local date_time="%{$fg_bold[green]%}%D{%Y-%m-%d} %T "
 
 local vcs_branch='$(git_prompt_info)$(hg_prompt_info)'
 local rvm_ruby='$(ruby_prompt_info)'
