@@ -136,4 +136,4 @@ alias venv_python3_make="if [[ $(python3 --version) == Python\ 3.* ]]; then pyth
 alias venv_activate="source ./venv/bin/activate"
 alias lower="tr '[:upper:]' '[:lower:]'"
 alias upper="tr '[:lower:]' '[:upper:]'"
-alias domain_regex_nxc="grep -haP 'domain:((?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63})'"
+alias nxc_domain_regex="grep -haP 'domain:((?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63})'"
