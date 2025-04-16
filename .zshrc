@@ -112,7 +112,14 @@ export GOROOT=/usr/lib/go
 export GOPATH=$HOME/go
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
+# Check if python2 or python3 is installed
+if [[ $(python --version) == Python\ 2.* ]]; then
+    python2exist=TRUE
+fi
 
+if [[ $(python3 --version) == Python\ 3.* ]]; then
+    python3exist=TRUE
+fi
 
 alias slash24="cut -d. -f1-3 | sed 's/$/.0\/24/' | sort -u"
 alias mount_vmware_shares="/usr/bin/vmhgfs-fuse .host:/ /root/shares -o subtype=vmhgfs-ffuse,allow_other"
@@ -124,8 +131,8 @@ alias postman="/opt/Postman/Postman > /dev/null 2>&1 &"
 alias readablehistory="sed 's/;/,,,,,/' ~/.zsh_history | awk -F',,,,,' '{cmd=\$2; sub(/^: /, \"\", \$1); split(\$1, t, \":\"); print strftime(\"%Y-%m-%d %H:%M:%S\", t[1]) \" - \" cmd}'"
 alias readablehistoryUTCfromEST="sed 's/;/,,,,,/' ~/.zsh_history | awk -F',,,,,' '{cmd=\$2; sub(/^: /, \"\", \$1); split(\$1, t, \":\"); print strftime(\"%Y-%m-%d %H:%M:%S\", t[1] + 18000) \" - \" cmd}'"
 alias readablehistoryUTCfromEDT="sed 's/;/,,,,,/' ~/.zsh_history | awk -F',,,,,' '{cmd=\$2; sub(/^: /, \"\", \$1); split(\$1, t, \":\"); print strftime(\"%Y-%m-%d %H:%M:%S\", t[1] + 14400) \" - \" cmd}'"
-alias venv_python2_make="python -m venv venv"
-alias venv_python3_make="python3 -m venv venv"
+alias venv_python2_make="if [[ $(python --version) == Python\ 2.* ]]; then python -m venv venv; fi"
+alias venv_python3_make="if [[ $(python3 --version) == Python\ 3.* ]]; then python3 -m venv venv; fi"
 alias venv_activate="source ./venv/bin/activate"
 alias lower="tr '[:upper:]' '[:lower:]'"
 alias upper="tr '[:lower:]' '[:upper:]'"
