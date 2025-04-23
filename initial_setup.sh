@@ -2,11 +2,16 @@
 #TODO:
 # Add proxy support
 
+
 #Check if zsh is installed
 if [ ! -f /bin/zsh ]; then
   echo "ZSH is not installed. Please install ZSH before continuing. Exiting..."
   exit 1
 fi
+
+
+#Rename tmux config file at /etc/tmux.conf as a backup
+mv /etc/tmux.conf /etc/tmux.conf.bkup
 
 
 #Install oh-my-zsh if it is not already installed
@@ -17,13 +22,10 @@ fi
 
 
 #Move config files into place
-mv .tmux.conf ~/.tmux.conf
-mv .zshrc ~/.zshrc
-mv zach.zsh-theme ~/.oh-my-zsh/themes/zach.zsh-theme
-
-
-#Rename tmux config file at /etc/tmux.conf to avoid accidentally loading it
-mv /etc/tmux.conf /etc/tmux.conf.bkup
+cp .tmux.conf ~/.tmux.conf
+cp .tmux.conf /etc/tmux.conf
+cp .zshrc ~/.zshrc
+cp zach.zsh-theme ~/.oh-my-zsh/themes/zach.zsh-theme
 
 
 echo -e "***You should now spawn a new ZSH session by typing:\nzsh"
