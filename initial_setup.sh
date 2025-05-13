@@ -22,9 +22,14 @@ fi
 
 
 #Move config files into place
+#TODO: Check if file exists before copying
+echo "***Moving tmux config file into place"
 cp .tmux.conf ~/.tmux.conf
+echo "***Moving zsh config file into place"
 cp .tmux.conf /etc/tmux.conf
+echo "***Moving zsh config file into place"
 cp .zshrc ~/.zshrc
+echo "***Moving zsh theme file into place"
 cp zach.zsh-theme ~/.oh-my-zsh/themes/zach.zsh-theme
 
 
