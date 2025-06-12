@@ -51,7 +51,8 @@ run_ssh_command ssh -fNR $D_PORT:localhost:$D_PORT root@$RHOST
 echo "Creating SSH tunnel to map remote nessus port to local port:"
 run_ssh_command ssh -fNL $N_PORT:127.0.0.1:$N_PORT root@$RHOST
 
-#Honestly, not sure what this was supposed to be for
+# This can be used if you need to let the remote host access a local service
+# As this is not a common use case, it is commented out
 #run_ssh_command ssh -fNR 127.0.0.1:$R_PORT root@$RHOST
 
 #echo "SSH commands executed successfully on $RHOST with -D $D_PORT, -N $N_PORT, and -R $R_PORT"
