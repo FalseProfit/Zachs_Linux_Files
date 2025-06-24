@@ -121,7 +121,7 @@ if [[ $(python3 --version) == Python\ 3.* ]]; then
     python3exist=TRUE
 fi
 
-alias fp--slash24="cut -d. -f1-3 | sed 's/$/.0\/24/' | sort -u"
+alias fp--slash24="cut -d. -f1-3 | sed 's/$/.0\/24/' | sort -uV"
 alias fp--mount_vmware_shares="/usr/bin/vmhgfs-fuse .host:/ /root/shares -o subtype=vmhgfs-ffuse,allow_other"
 alias fp--ipgrep="grep -oE '([^.]|^)([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])([^.]|$)' | sed 's/ //g'"
 alias fp--ipgrepLine="grep -E '([^.]|^)([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]{1,2}|1[0-9]{2}|2[0-4][0-9]|25[0-5])([^.]|$)'"
