@@ -41,14 +41,14 @@ run_ssh_command() {
 }
 
 # Run the SSH commands with error checking
-echo "***Prepare to paste the SSH account and/or key password multiple times***"
+echo -e "\n\n***Prepare to paste the SSH account and/or key password multiple times***"
 # Allow the remote host to proxychains through localhost
-echo "Creating SSH tunnel to allow proxychains through localhost:"
+echo -e "\nCreating SSH tunnel to allow proxychains through localhost:"
 run_ssh_command ssh -fND $D_PORT root@127.0.0.1
 run_ssh_command ssh -fNR $D_PORT:localhost:$D_PORT root@$RHOST
 
 # Map the remote nessus 8834 port to the local 8834 port
-echo "Creating SSH tunnel to map remote nessus port to local port:"
+echo -e "\nCreating SSH tunnel to map remote nessus port to local port:"
 run_ssh_command ssh -fNL $N_PORT:127.0.0.1:$N_PORT root@$RHOST
 
 # This can be used if you need to let the remote host access a local service
