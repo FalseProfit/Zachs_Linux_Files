@@ -12,7 +12,7 @@ usage() {
 O_PORT=9050
 I_PORT=9999
 N_PORT=8834
-R_PORT=7171
+R_PORT=8000
 
 # Check if the hostname argument is provided
 if [ -z "$1" ]; then
