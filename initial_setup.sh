@@ -22,7 +22,12 @@ fi
 
 
 #Rename tmux config file at /etc/tmux.conf as a backup
-mv /etc/tmux.conf /etc/tmux.conf.bkup
+if [ -f /etc/tmux.conf ]; then
+  echo "***Renaming existing tmux config file at /etc/tmux.conf to /etc/tmux.conf.bkup"
+else
+  echo "No existing tmux config file found at /etc/tmux.conf. Skipping rename."
+fi
+
 #Move config files into place
 echo "***Moving tmux config file into place"
 if [ -f .tmux.conf ]; then
