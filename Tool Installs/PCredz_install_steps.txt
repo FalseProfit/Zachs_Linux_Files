@@ -3,4 +3,4 @@ cd PCredz
 python3 -m venv venv
 source ./venv/bin/activate
 # This is altered from the repo's instructions as installing python3-dev is not mentioned by the tool author
-apt install libpcap-dev && sudo apt install python3-dev && sudo apt install file && pip3 install Cython && pip3 install python-libpcap
+sudo apt update && sudo apt install libpcap-dev && sudo apt install python3-dev && sudo apt install file && pip3 install Cython && pip3 install python-libpcap
