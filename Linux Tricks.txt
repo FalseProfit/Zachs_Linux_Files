@@ -3,5 +3,5 @@ sed 's/^\(testing1\|testing2\)=true/\1=false/' temp.txt
 
 #awk
 #Match starting at the end of the line
-#Match fourth from last and second to last
-awk '{print $(NF-3),$(NF-1)}'
+#Match fourth from last, second to last, and last
+awk '{print $(NF-3),$(NF-1),$NF}'
