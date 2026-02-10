@@ -5,8 +5,8 @@
 # Set the path to the folder containing the .vmdk files
 $folderPath = "C:\Path\To\Your\Folder"
 
-# Set the path to the .exe you want to run
-$exePath = "C:\Path\To\YourProgram\yourtool.exe"
+# Set the path to the vmware-vdiskmanager.exe you want to run
+$exePath = "C:\Path\To\YourProgram\vmware-vdiskmanager.exe"
 
 # Get all .vmdk files recursively
 $vmdkFiles = Get-ChildItem -Path $folderPath -Filter *.vmdk -Recurse -File
