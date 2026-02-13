@@ -2,6 +2,25 @@
 #TODO:
 # Add proxy support
 
+PROXY_PREFIX=""
+
+
+# Parse command line arguments for proxy usage
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -p|--proxy) 
+            PROXY_PREFIX="proxychains" 
+            echo "*** Proxychains support enabled."
+            echo "Please ensure that proxychains is properly configured before running this script."
+            echo "You can configure proxychains by editing the /etc/proxychains.conf file."
+            echo "Press Enter to continue..."
+            read
+            ;;
+        *) 
+            ;; # Ignore other arguments
+    esac
+    shift
+done
 
 #Check if zsh is installed
 if [ ! -f /bin/zsh ]; then
@@ -13,7 +32,7 @@ fi
 if [ ! -d ~/.oh-my-zsh ]; then
   echo "***Installing oh-my-zsh. If network access is blocked, install manually via proxychains or similar."
   echo "Please rerun this script after installing oh-my-zsh."
-  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  sh -c "$($PROXY_PREFIX curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
 
 ### Rename tmux config file at /etc/tmux.conf as a backup
