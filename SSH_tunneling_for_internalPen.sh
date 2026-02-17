@@ -5,6 +5,14 @@
 # Usage function
 usage() {
     echo "Usage: $0 hostname.domain.com [-U <remote_user>] [-O <remote_outbound_via_local_socks_port>] [-I <local_into_remote_network_via_local_socks_port>] [-N <nessus_port>] [-R <remote_into_local_port>]"
+    echo "The hostname must be the first argument, followed by optional arguments in any order."
+    echo "Default options are:"
+    echo "  -U <remote_user>: Remote SSH username (default: root)"
+    echo "  -O <remote_outbound_via_local_socks_port>: REMOTE outbound traffic THROUGH LOCAL SOCKS proxy port (default: 9050)"
+    echo "  -I <local_into_remote_network_via_local_socks_port>: LOCAL proxy port to access REMOTE network (default: 9999)"
+    echo "  -N <nessus_port>: Local port to access remote Nessus (default: 8834)"
+    echo "  -R <remote_into_local_port>: Port for REMOTE to access a specific LOCAL service via 1 to 1 port tunnel, which as a python web server hosted on LOCAL (default: 8000)"
+
     exit 1
 }
 
@@ -36,6 +44,11 @@ while getopts "O:I:N:R:U:" opt; do
         *) usage;;
     esac
 done
+
+#Check that hostname has been provided as the first CLI arugment and optional arguments follow after that
+
+
+
 
 # Function to check SSH command success
 run_ssh_command() {
