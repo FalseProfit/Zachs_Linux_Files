@@ -26,7 +26,8 @@ R_PORT=8000
 R_USER=root
 
 # Check if the hostname argument is provided
-if [ -z "$1" ]; then
+if [ -z "$1" ] || [[ "$1" =~ ^- ]]; then
+    echo "Error: Hostname is required as the first argument."
     usage
 fi
 
@@ -44,10 +45,6 @@ while getopts "O:I:N:R:U:" opt; do
         *) usage;;
     esac
 done
-
-#Check that hostname has been provided as the first CLI arugment and optional arguments follow after that
-
-
 
 
 # Function to check SSH command success
