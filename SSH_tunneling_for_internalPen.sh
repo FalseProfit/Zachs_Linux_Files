@@ -65,7 +65,7 @@ run_ssh_command ssh -fNR $O_PORT:localhost:$O_PORT $R_USER@$R_HOST
 
 
 # Allow proxychains to access the remote host
-echo -e "\nCreating SSH tunnel to allow proxychains to access the remote host:"
+echo -e "\nCreating SSH tunnel to allow proxychains to access the remote network:"
 run_ssh_command ssh -fND $I_PORT $R_USER@$R_HOST 
 
 
