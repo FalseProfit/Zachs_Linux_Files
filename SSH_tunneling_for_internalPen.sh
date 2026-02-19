@@ -4,8 +4,9 @@
 
 # Usage function
 usage() {
-    echo "Usage: $0 hostname.domain.com [-U <remote_user>] [-O <remote_outbound_via_local_socks_port>] [-I <local_into_remote_network_via_local_socks_port>] [-N <nessus_port>] [-R <remote_into_local_port>]"
-    echo "The hostname must be the first argument, followed by optional arguments in any order."
+    echo -e "This script sets up SSH tunnels that are useful during internal penetration testing engagements in which a remote "rogue device" is placed inside the target network and the tester needs to access services on the remote host and/or use proxychains to pivot through the remote host to access other hosts in the target network.\n"
+    echo -e "Usage: $0 hostname.domain.com [-U <remote_user>] [-O <remote_outbound_via_local_socks_port>] [-I <local_into_remote_network_via_local_socks_port>] [-N <nessus_port>] [-R <remote_into_local_port>]\n"
+    echo "The remote hostname must be the first argument, followed by optional arguments in any order."
     echo "Default options are:"
     echo "  -U <remote_user>: Remote SSH username (default: root)"
     echo "  -O <remote_outbound_via_local_socks_port>: REMOTE outbound traffic THROUGH LOCAL SOCKS proxy port (default: 9050)"
@@ -22,7 +23,7 @@ I_PORT=9999
 N_PORT=8834
 R_PORT=8000
 
-# Default user
+# Default remote user
 R_USER=root
 
 # Check if the hostname argument is provided
