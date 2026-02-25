@@ -31,8 +31,11 @@ fi
 ### Install oh-my-zsh if it is not already installed
 if [ ! -d ~/.oh-my-zsh ]; then
   echo "***Installing oh-my-zsh. If network access is blocked, install manually via proxychains or similar."
+  # Remove the below echo line if the RUNZSH=no option works as expected and prevents the installation script from spawning a new zsh session at the end of the installation process.
   echo "Please rerun this script after installing oh-my-zsh."
-  sh -c "$($PROXY_PREFIX curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  # Retrieve ohmyzsh installation script. 
+  #Do not run a new zsh session at the end of the installation script to avoid closing the parent script.
+  RUNZSH=no sh -c "$($PROXY_PREFIX curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 fi
 
 ### Rename tmux config file at /etc/tmux.conf as a backup
@@ -78,6 +81,6 @@ else
 fi
 
 ### Wait for user input before ending the script
-echo -e "\n***Setup complete! Please review the output above for any errors or warnings"
+echo -e "\n***Setup complete! Please review the output above for any errors or warnings."
 echo -e "***You should now spawn a new ZSH session by typing:\nzsh\n"
 read -p "After reading the above, press Enter to exit the script..."
