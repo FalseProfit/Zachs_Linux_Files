@@ -112,14 +112,7 @@ export GOROOT=/usr/lib/go
 export GOPATH=$HOME/go
 export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 
-# Check if python2 or python3 is installed
-if [[ $(python --version) == Python\ 2.* ]]; then
-    python2exist=TRUE
-fi
 
-if [[ $(python3 --version) == Python\ 3.* ]]; then
-    python3exist=TRUE
-fi
 
 alias slash24="cut -d. -f1-3 | sed 's/$/.0\/24/' | sort -uV"
 alias mount_vmware_shares="/usr/bin/vmhgfs-fuse .host:/ /root/shares -o subtype=vmhgfs-ffuse,allow_other"
