@@ -5,7 +5,13 @@ local user_host="%B%(!.%{$fg[red]%}.%{$fg[green]%})%n@%m%{$reset_color%} "
 local user_symbol='%(!.#.$)'
 local current_dir="%B%{$fg[blue]%}%~ %{$reset_color%}"
 local conda_prompt='$(conda_prompt_info)'
-local user_IP="%{$fg_bold[white]%}$(hostname -I | cut -d " " -f 1) "
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    local user_IP="%{$fg_bold[white]%}$(ipconfig getifaddr en0) "
+else
+    # Linux
+    local user_IP="%{$fg_bold[white]%}$(hostname -I | cut -d " " -f 1) "
+fi
 local date_time="%{$fg_bold[green]%}%D{%Y-%m-%d} %T "
 
 local vcs_branch='$(git_prompt_info)$(hg_prompt_info)'
