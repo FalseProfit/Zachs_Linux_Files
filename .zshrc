@@ -130,3 +130,20 @@ alias venv_activate="source ./venv/bin/activate"
 alias lower="tr '[:upper:]' '[:lower:]'"
 alias upper="tr '[:lower:]' '[:upper:]'"
 alias nxc_domain_regex="grep -haP 'domain:((?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63})'"
+
+
+proxycli() {
+	if [[ -z "$http_proxy" ]]; then
+		export http_proxy="http://127.0.0.1:8080"
+		export https_proxy="http://127.0.0.1:8080"
+		export HTTP_PROXY="http://127.0.0.1:8080"
+		export HTTPS_PROXY="http://127.0.0.1:8080"
+        #
+		gcloud config set core/custom_ca_certs_file "$HOME/<burp-ca>.pem"
+		echo "🟢 Proxy ON → 127.0.0.1:8080  (Burp CA trusted)"
+	else
+		unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY no_proxy NO_PROXY
+		gcloud config unset core/custom_ca_certs_file
+		echo "🔴 Proxy OFF  (system CA store)"
+	fi
+}
