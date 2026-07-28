@@ -13,8 +13,8 @@ usage() {
     echo "  -U <user>: Username used to connect to the remote host (default: root)"
     echo "  -u <user>: Username used to connect to 127.0.0.1 (default: root)"
     echo "  -O <port>: REMOTE outbound traffic THROUGH LOCAL SOCKS proxy port (default: 9050)"
-    echo "  -I <port>: LOCAL proxy port used to access the REMOTE network (default: 9999)"
-    echo "  -N <port>: Local port used to access remote Nessus (default: 8834)"
+    echo "  -i <port>: LOCAL proxy port used to access the REMOTE network (default: 9999)"
+    echo "  -n <port>: Local port used to access remote Nessus (default: 8834)"
     echo "  -R <port>: Port used on both ends when REMOTE accesses a LOCAL service (default: 8000)"
     echo
     echo "Tunnel selectors are:"
@@ -70,7 +70,7 @@ shift
 # the built-in getopts command does not support descriptive long options.
 while [ "$#" -gt 0 ]; do
     case "$1" in
-        -O|-I|-N|-R|-U|-u)
+        -O|-i|-n|-R|-U|-u)
             # Each of these options must be followed by a value.
             if [ "$#" -lt 2 ] || [ -z "$2" ] || [[ "$2" = -* ]]; then
                 echo "Error: $1 requires a value." >&2
@@ -79,8 +79,8 @@ while [ "$#" -gt 0 ]; do
 
             case "$1" in
                 -O) O_PORT="$2";;
-                -I) I_PORT="$2";;
-                -N) N_PORT="$2";;
+                -i) I_PORT="$2";;
+                -n) N_PORT="$2";;
                 -R) R_PORT="$2";;
                 -U) R_USER="$2";;
                 -u) L_USER="$2";;
@@ -151,8 +151,8 @@ validate_port() {
 
 # Validate every configured port before starting any SSH processes.
 validate_port "-O port" "$O_PORT"
-validate_port "-I port" "$I_PORT"
-validate_port "-N port" "$N_PORT"
+validate_port "-i port" "$I_PORT"
+validate_port "-n port" "$N_PORT"
 validate_port "-R port" "$R_PORT"
 
 # Stop before creating tunnels if the OpenSSH client is not installed or not in PATH.
