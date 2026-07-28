@@ -161,7 +161,11 @@ if ! command -v ssh >/dev/null 2>&1; then
     exit 1
 fi
 
-# Run one SSH command and stop if it fails. The tunnel name makes the error clear.
+# Count failures so the script can report them after trying every selected tunnel.
+SSH_FAILURES=0
+
+# Run one SSH command. If it fails, print a warning and continue to the next command.
+# The tunnel name makes it clear which SSH command had the problem.
 run_ssh_command() {
     TUNNEL_NAME="$1"
     shift
@@ -170,10 +174,13 @@ run_ssh_command() {
     SSH_STATUS=$?
 
     if [ "$SSH_STATUS" -ne 0 ]; then
-        echo "Error: Failed to create the $TUNNEL_NAME tunnel (ssh exited with status $SSH_STATUS)." >&2
-        echo "Any tunnels started earlier by this script may still be running." >&2
-        exit "$SSH_STATUS"
+        echo "Warning: Failed to create the $TUNNEL_NAME tunnel (ssh exited with status $SSH_STATUS)." >&2
+        echo "Continuing to the next selected SSH command." >&2
+        SSH_FAILURES=$((SSH_FAILURES + 1))
     fi
+
+    # Always return success here so a failed tunnel does not stop the script.
+    return 0
 }
 
 # ExitOnForwardFailure makes SSH report a bind or forwarding failure before it
@@ -183,26 +190,39 @@ echo -e "\n\n***Prepare to paste the SSH account and/or key password multiple ti
 if [ "$OUTBOUND_PROXY" -eq 1 ]; then
     # Allow the remote host to proxychains through localhost.
     echo -e "\nCreating SSH tunnel to allow proxychains out of the client network through localhost:"
+    echo "Password reminder: If prompted, enter the password for local user '$L_USER' on 127.0.0.1."
     run_ssh_command "local outbound SOCKS proxy" ssh -o ExitOnForwardFailure=yes -fND "$O_PORT" "$L_USER@127.0.0.1"
+    echo "Password reminder: If prompted, enter the password for remote user '$R_USER' on $R_HOST."
     run_ssh_command "remote connection to the outbound SOCKS proxy" ssh -o ExitOnForwardFailure=yes -fNR "$O_PORT:localhost:$O_PORT" "$R_USER@$R_HOST"
 fi
 
 if [ "$INBOUND_PROXY" -eq 1 ]; then
     # Allow local proxychains to access hosts on the remote network.
     echo -e "\nCreating SSH tunnel to allow proxychains to access the remote network:"
+    echo "Password reminder: If prompted, enter the password for remote user '$R_USER' on $R_HOST."
     run_ssh_command "inbound SOCKS proxy" ssh -o ExitOnForwardFailure=yes -fND "$I_PORT" "$R_USER@$R_HOST"
 fi
 
 if [ "$NESSUS" -eq 1 ]; then
     # Map the remote Nessus port to the same port on the local machine.
     echo -e "\nCreating SSH tunnel to map the remote Nessus port to the local port:"
+    echo "Password reminder: If prompted, enter the password for remote user '$R_USER' on $R_HOST."
     run_ssh_command "Nessus" ssh -o ExitOnForwardFailure=yes -fNL "$N_PORT:127.0.0.1:$N_PORT" "$R_USER@$R_HOST"
 fi
 
 if [ "$REMOTE_TO_LOCAL" -eq 1 ]; then
     # Let the remote host reach a service bound to the same port on localhost.
     echo -e "\nCreating SSH tunnel to let the remote host access a local service:"
+    echo "Password reminder: If prompted, enter the password for remote user '$R_USER' on $R_HOST."
     run_ssh_command "remote-to-local service" ssh -o ExitOnForwardFailure=yes -fNR "$R_PORT:127.0.0.1:$R_PORT" "$R_USER@$R_HOST"
 fi
 
-echo -e "\nAll selected SSH tunnels started successfully."
+# Report the overall result after every selected SSH command has been attempted.
+# SSH failures are warnings for this script, so they do not cause a failure exit status.
+if [ "$SSH_FAILURES" -eq 0 ]; then
+    echo -e "\nAll selected SSH tunnels started successfully."
+else
+    echo -e "\nFinished attempting all selected SSH tunnels. $SSH_FAILURES SSH command(s) failed." >&2
+fi
+
+exit 0
