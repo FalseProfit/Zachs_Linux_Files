@@ -12,14 +12,15 @@ usage() {
     echo "Options are:"
     echo "  -U <user>: Username used to connect to the remote host (default: root)"
     echo "  -u <user>: Username used to connect to 127.0.0.1 (default: root)"
-    echo "  -O <port>: REMOTE outbound traffic THROUGH LOCAL SOCKS proxy port (default: 9050)"
-    echo "  -i <port>: LOCAL proxy port used to access the REMOTE network (default: 9999)"
+    echo "  -i <path>: Identity file used only for remote host connections; disables password fallback"
+    echo "  -o <port>: LOCAL-to-REMOTE SOCKS proxy port (default: 9999)"
+    echo "  -I <port>: REMOTE-to-LOCAL SOCKS proxy port (default: 9050)"
     echo "  -n <port>: Local port used to access remote Nessus (default: 8834)"
     echo "  -R <port>: Port used on both ends when REMOTE accesses a LOCAL service (default: 8000)"
     echo
     echo "Tunnel selectors are:"
-    echo "  --outbound-proxy: Allow the remote host to use the local SOCKS proxy"
-    echo "  --inbound-proxy: Create a local SOCKS proxy into the remote network"
+    echo "  --local-to-remote-proxy: Create a local SOCKS proxy into the remote network"
+    echo "  --remote-to-local-proxy: Allow the remote host to use the local SOCKS proxy"
     echo "  --nessus: Forward the remote Nessus port to the local machine"
     echo "  --remote-to-local: Allow the remote host to access a local service"
     echo
@@ -38,22 +39,27 @@ for ARGUMENT in "$@"; do
     fi
 done
 
-# Default ports
-O_PORT=9050
-I_PORT=9999
+# Default ports. Directions are described from the local machine's viewpoint.
+REMOTE_TO_LOCAL_PROXY_PORT=9050
+LOCAL_TO_REMOTE_PROXY_PORT=9999
 N_PORT=8834
 R_PORT=8000
 
 # Default users. The local user is used only for the localhost SSH connection
-# created as part of the outbound proxy tunnel.
+# created as part of the remote-to-local proxy tunnel.
 R_USER=root
 L_USER=root
+
+# Supplying an identity file opts remote connections into public-key-only
+# authentication. The localhost connection keeps its normal SSH behavior.
+IDENTITY_FILE=""
+IDENTITY_FILE_SET=0
 
 # Each selector starts as disabled. If the user does not provide any selectors,
 # all four will be enabled after the arguments have been read.
 SELECTOR_USED=0
-OUTBOUND_PROXY=0
-INBOUND_PROXY=0
+LOCAL_TO_REMOTE_PROXY=0
+REMOTE_TO_LOCAL_PROXY=0
 NESSUS=0
 REMOTE_TO_LOCAL=0
 
@@ -70,7 +76,7 @@ shift
 # the built-in getopts command does not support descriptive long options.
 while [ "$#" -gt 0 ]; do
     case "$1" in
-        -O|-i|-n|-R|-U|-u)
+        -I|-o|-n|-R|-U|-u|-i)
             # Each of these options must be followed by a value.
             if [ "$#" -lt 2 ] || [ -z "$2" ] || [[ "$2" = -* ]]; then
                 echo "Error: $1 requires a value." >&2
@@ -78,22 +84,30 @@ while [ "$#" -gt 0 ]; do
             fi
 
             case "$1" in
-                -O) O_PORT="$2";;
-                -i) I_PORT="$2";;
+                -I) REMOTE_TO_LOCAL_PROXY_PORT="$2";;
+                -o) LOCAL_TO_REMOTE_PROXY_PORT="$2";;
                 -n) N_PORT="$2";;
                 -R) R_PORT="$2";;
                 -U) R_USER="$2";;
                 -u) L_USER="$2";;
+                -i)
+                    if [ "$IDENTITY_FILE_SET" -eq 1 ]; then
+                        echo "Error: -i may be specified only once." >&2
+                        usage 1
+                    fi
+                    IDENTITY_FILE="$2"
+                    IDENTITY_FILE_SET=1
+                    ;;
             esac
             shift 2
             ;;
-        --outbound-proxy)
-            OUTBOUND_PROXY=1
+        --local-to-remote-proxy)
+            LOCAL_TO_REMOTE_PROXY=1
             SELECTOR_USED=1
             shift
             ;;
-        --inbound-proxy)
-            INBOUND_PROXY=1
+        --remote-to-local-proxy)
+            REMOTE_TO_LOCAL_PROXY=1
             SELECTOR_USED=1
             shift
             ;;
@@ -124,8 +138,8 @@ done
 
 # Running without selectors keeps the convenient behavior of creating every tunnel.
 if [ "$SELECTOR_USED" -eq 0 ]; then
-    OUTBOUND_PROXY=1
-    INBOUND_PROXY=1
+    LOCAL_TO_REMOTE_PROXY=1
+    REMOTE_TO_LOCAL_PROXY=1
     NESSUS=1
     REMOTE_TO_LOCAL=1
 fi
@@ -150,10 +164,28 @@ validate_port() {
 }
 
 # Validate every configured port before starting any SSH processes.
-validate_port "-O port" "$O_PORT"
-validate_port "-i port" "$I_PORT"
+validate_port "-o port" "$LOCAL_TO_REMOTE_PROXY_PORT"
+validate_port "-I port" "$REMOTE_TO_LOCAL_PROXY_PORT"
 validate_port "-n port" "$N_PORT"
 validate_port "-R port" "$R_PORT"
+
+# Validate an explicitly selected identity before starting any tunnels. OpenSSH
+# remains responsible for validating the key format and file permissions.
+if [ "$IDENTITY_FILE_SET" -eq 1 ] && { [ ! -f "$IDENTITY_FILE" ] || [ ! -r "$IDENTITY_FILE" ]; }; then
+    echo "Error: -i identity file must be an existing, readable regular file: $IDENTITY_FILE" >&2
+    exit 1
+fi
+
+# Keep normal authentication when no identity was selected. When -i is used,
+# prevent password fallback and avoid offering unrelated keys from ssh-agent.
+REMOTE_SSH_AUTH_OPTIONS=()
+if [ "$IDENTITY_FILE_SET" -eq 1 ]; then
+    REMOTE_SSH_AUTH_OPTIONS=(
+        -i "$IDENTITY_FILE"
+        -o IdentitiesOnly=yes
+        -o PreferredAuthentications=publickey
+    )
+fi
 
 # Stop before creating tunnels if the OpenSSH client is not installed or not in PATH.
 if ! command -v ssh >/dev/null 2>&1; then
@@ -183,38 +215,46 @@ run_ssh_command() {
     return 0
 }
 
+print_remote_auth_reminder() {
+    if [ "$IDENTITY_FILE_SET" -eq 1 ]; then
+        echo "Key reminder: If prompted, enter the passphrase for '$IDENTITY_FILE'."
+    else
+        echo "Password reminder: If prompted, enter the password for remote user '$R_USER' on $R_HOST."
+    fi
+}
+
 # ExitOnForwardFailure makes SSH report a bind or forwarding failure before it
 # moves into the background. This lets run_ssh_command catch the problem.
-echo -e "\n\n***Prepare to paste the SSH account and/or key password multiple times***"
+echo -e "\n\n***Prepare to enter SSH account passwords and/or key passphrases multiple times***"
 
-if [ "$OUTBOUND_PROXY" -eq 1 ]; then
+if [ "$REMOTE_TO_LOCAL_PROXY" -eq 1 ]; then
     # Allow the remote host to proxychains through localhost.
-    echo -e "\nCreating SSH tunnel to allow proxychains out of the client network through localhost:"
+    echo -e "\nCreating REMOTE-to-LOCAL SSH tunnel to let the remote host use the local SOCKS proxy:"
     echo "Password reminder: If prompted, enter the password for local user '$L_USER' on 127.0.0.1."
-    run_ssh_command "local outbound SOCKS proxy" ssh -o ExitOnForwardFailure=yes -fND "$O_PORT" "$L_USER@127.0.0.1"
-    echo "Password reminder: If prompted, enter the password for remote user '$R_USER' on $R_HOST."
-    run_ssh_command "remote connection to the outbound SOCKS proxy" ssh -o ExitOnForwardFailure=yes -fNR "$O_PORT:localhost:$O_PORT" "$R_USER@$R_HOST"
+    run_ssh_command "local SOCKS proxy for remote traffic" ssh -o ExitOnForwardFailure=yes -fND "$REMOTE_TO_LOCAL_PROXY_PORT" "$L_USER@127.0.0.1"
+    print_remote_auth_reminder
+    run_ssh_command "remote connection to the local SOCKS proxy" ssh -o ExitOnForwardFailure=yes "${REMOTE_SSH_AUTH_OPTIONS[@]}" -fNR "$REMOTE_TO_LOCAL_PROXY_PORT:localhost:$REMOTE_TO_LOCAL_PROXY_PORT" "$R_USER@$R_HOST"
 fi
 
-if [ "$INBOUND_PROXY" -eq 1 ]; then
+if [ "$LOCAL_TO_REMOTE_PROXY" -eq 1 ]; then
     # Allow local proxychains to access hosts on the remote network.
-    echo -e "\nCreating SSH tunnel to allow proxychains to access the remote network:"
-    echo "Password reminder: If prompted, enter the password for remote user '$R_USER' on $R_HOST."
-    run_ssh_command "inbound SOCKS proxy" ssh -o ExitOnForwardFailure=yes -fND "$I_PORT" "$R_USER@$R_HOST"
+    echo -e "\nCreating LOCAL-to-REMOTE SSH tunnel to let local proxychains access the remote network:"
+    print_remote_auth_reminder
+    run_ssh_command "local-to-remote SOCKS proxy" ssh -o ExitOnForwardFailure=yes "${REMOTE_SSH_AUTH_OPTIONS[@]}" -fND "$LOCAL_TO_REMOTE_PROXY_PORT" "$R_USER@$R_HOST"
 fi
 
 if [ "$NESSUS" -eq 1 ]; then
     # Map the remote Nessus port to the same port on the local machine.
     echo -e "\nCreating SSH tunnel to map the remote Nessus port to the local port:"
-    echo "Password reminder: If prompted, enter the password for remote user '$R_USER' on $R_HOST."
-    run_ssh_command "Nessus" ssh -o ExitOnForwardFailure=yes -fNL "$N_PORT:127.0.0.1:$N_PORT" "$R_USER@$R_HOST"
+    print_remote_auth_reminder
+    run_ssh_command "Nessus" ssh -o ExitOnForwardFailure=yes "${REMOTE_SSH_AUTH_OPTIONS[@]}" -fNL "$N_PORT:127.0.0.1:$N_PORT" "$R_USER@$R_HOST"
 fi
 
 if [ "$REMOTE_TO_LOCAL" -eq 1 ]; then
     # Let the remote host reach a service bound to the same port on localhost.
     echo -e "\nCreating SSH tunnel to let the remote host access a local service:"
-    echo "Password reminder: If prompted, enter the password for remote user '$R_USER' on $R_HOST."
-    run_ssh_command "remote-to-local service" ssh -o ExitOnForwardFailure=yes -fNR "$R_PORT:127.0.0.1:$R_PORT" "$R_USER@$R_HOST"
+    print_remote_auth_reminder
+    run_ssh_command "remote-to-local service" ssh -o ExitOnForwardFailure=yes "${REMOTE_SSH_AUTH_OPTIONS[@]}" -fNR "$R_PORT:127.0.0.1:$R_PORT" "$R_USER@$R_HOST"
 fi
 
 # Report the overall result after every selected SSH command has been attempted.
