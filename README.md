@@ -2,6 +2,21 @@
 
 This repo is a lightweight portability bundle for new Kali Linux boxes, a main Kali VM, and a few convenience cases on macOS. Kali/Linux is the primary target. Most files are either shell/tmux preferences or small operator helpers. A few files are reference notes only.
 
+## Clone and set up through ProxyChains
+
+Requires `git`, `curl`, `zsh`, `tmux`, and ProxyChains to be installed on the Kali box. Configure your SOCKS endpoint and enable `proxy_dns` in the host's existing ProxyChains configuration before starting.
+
+Run these commands as your normal user:
+
+```sh
+PC=$(command -v proxychains || command -v proxychains4) &&
+"$PC" git clone https://github.com/FalseProfit/Zachs_Linux_Files.git &&
+cd Zachs_Linux_Files &&
+zsh initial_setup.sh --proxy --install-system-tmux -y
+```
+
+The clone uses the installed ProxyChains binary, and `--proxy` wraps the setup installer's network traffic using the existing local configuration. `--install-system-tmux` installs `/etc/tmux.conf`; only the system file operations use `sudo`, so enter your sudo password when prompted. Existing configs receive timestamped backups before replacement, and `-y` skips the script's prompts.
+
 ## What is here
 
 - [`.zshrc`](/Users/zjohnson/Repositories/Zachs_Linux_Files/.zshrc): shared shell configuration with guarded aliases and path defaults.
