@@ -3,6 +3,10 @@ PROXY_CMD=()
 USE_PROXY=0
 INSTALL_SYSTEM_TMUX=0
 ASSUME_YES=0
+CURL_TLS_OPTION=--no-insecure
+# Git treats any GIT_SSL_NO_VERIFY value as a bypass, including "false".
+GIT_TLS_ENV=(-u GIT_SSL_NO_VERIFY
+  GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.sslVerify GIT_CONFIG_VALUE_0=true)
 
 die() {
   print -u2 -- "Error: $*"
@@ -40,8 +44,13 @@ while [[ "$#" -gt 0 ]]; do
         -y|--yes)
             ASSUME_YES=1
             ;;
+        --insecure)
+            CURL_TLS_OPTION=--insecure
+            GIT_TLS_ENV=(GIT_SSL_NO_VERIFY=true)
+            print -u2 -- "Warning: --insecure disables certificate verification for setup downloads (curl and Git)."
+            ;;
         -h|--help)
-            echo "Usage: $0 [-p|--proxy] [--install-system-tmux] [-y|--yes]"
+            echo "Usage: $0 [-p|--proxy] [--install-system-tmux] [--insecure] [-y|--yes]"
             exit 0
             ;;
         *)
@@ -78,11 +87,11 @@ if [ ! -d ~/.oh-my-zsh ]; then
     || die "Could not create a temporary installer file."
   trap 'rm -f -- "$installer"' EXIT
   # Keep ProxyChains banners out of the script; never run a partial download.
-  "${PROXY_CMD[@]}" curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o "$installer" \
+  "${PROXY_CMD[@]}" curl "$CURL_TLS_OPTION" -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o "$installer" \
     || die "Could not download the Oh My Zsh installer."
   [[ -s "$installer" ]] || die "The downloaded Oh My Zsh installer is empty."
   # Wrap the installer too: its Git subprocesses must inherit ProxyChains.
-  RUNZSH=no CHSH=no KEEP_ZSHRC=yes "${PROXY_CMD[@]}" sh "$installer" \
+  RUNZSH=no CHSH=no KEEP_ZSHRC=yes env "${GIT_TLS_ENV[@]}" "${PROXY_CMD[@]}" sh "$installer" \
     || die "Oh My Zsh installation failed; configuration files were not copied."
 fi
 

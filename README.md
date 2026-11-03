@@ -17,6 +17,14 @@ zsh initial_setup.sh --proxy --install-system-tmux -y
 
 The clone uses the installed ProxyChains binary, and `--proxy` wraps the setup installer's network traffic using the existing local configuration. `--install-system-tmux` installs `/etc/tmux.conf`; only the system file operations use `sudo`, so enter your sudo password when prompted. Existing configs receive timestamped backups before replacement, and `-y` skips the script's prompts.
 
+Certificate verification is enabled by default. If HTTPS inspection presents certificates this host does not trust, you can explicitly skip verification for one setup run:
+
+```sh
+zsh initial_setup.sh --proxy --insecure --install-system-tmux -y
+```
+
+`--insecure` skips certificate verification for both the curl download and the installer's Git requests. It does not change saved curl or Git settings, and does not apply to the preceding `git clone`. Because setup downloads and executes code, trusting your employer's CA is preferable when available.
+
 ## What is here
 
 - [`.zshrc`](/Users/zjohnson/Repositories/Zachs_Linux_Files/.zshrc): shared shell configuration with guarded aliases and path defaults.
@@ -50,6 +58,7 @@ Use local overrides for values that differ by host instead of editing the shared
 - `initial_setup.sh` supports:
   - `-p` / `--proxy` to route both the Oh My Zsh installer download and the installer's Git traffic through the executing host's installed `proxychains` (or `proxychains4` when `proxychains` is absent). The binary uses its existing configuration; the script does not install ProxyChains or change its config. Configure the SOCKS endpoint and proxy DNS on that host beforehand. Proxy failures stop setup without falling back to direct downloads.
   - `--install-system-tmux` to back up an existing `/etc/tmux.conf` and write the new one. Only these system copies use `sudo` when needed; run the script as your normal user to keep your user configuration and ProxyChains settings.
+  - `--insecure` to skip TLS certificate verification for curl and the installer's Git requests for this run only. Verification stays enabled unless this flag is supplied.
   - `-y` / `--yes` to skip the script's prompts. Noninteractive runs also skip them. `sudo` may still require authentication when system tmux installation is requested.
   - Run from the repository root, for example: `zsh initial_setup.sh --proxy -y`. Download or installation failures stop setup before the configuration files are copied.
   - Existing configs are backed up beside the original before replacement, using names such as `.zshrc.bkup.20261103-143000.A1b2C3d4`. A unique suffix prevents backup collisions; backup failures stop setup before overwriting that config.
