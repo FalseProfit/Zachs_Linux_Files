@@ -1,87 +1,105 @@
 #!/bin/zsh
-#TODO:
-# Add proxy support
+PROXY_CMD=()
+USE_PROXY=0
+INSTALL_SYSTEM_TMUX=0
+ASSUME_YES=0
 
-PROXY_PREFIX=""
+die() {
+  print -u2 -- "Error: $*"
+  exit 1
+}
 
+# Optional remaining arguments are the command prefix (sudo for system files).
+copy_config() {
+  local source_file=$1 destination=$2 backup
+  shift 2
+  if [[ ! -f "$source_file" ]]; then
+    echo "File $source_file does not exist. Skipping copy to $destination."
+    return
+  fi
+  if [[ -e "$destination" || -L "$destination" ]]; then
+    # mktemp adds a unique suffix, so even same-second runs keep every backup.
+    backup=$("$@" mktemp "$destination.bkup.$(date +%Y%m%d-%H%M%S).XXXXXXXX") \
+      || die "Could not create a backup file for $destination."
+    "$@" cp -pL -- "$destination" "$backup" \
+      || die "Could not back up $destination to $backup; destination was not overwritten."
+    echo "Backed up $destination to $backup"
+  fi
+  "$@" cp -- "$source_file" "$destination" || die "Could not copy $destination."
+  echo "Copied $source_file to $destination"
+}
 
-# Parse command line arguments for proxy usage
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        -p|--proxy) 
-            PROXY_PREFIX="proxychains" 
-            echo "*** Proxychains support enabled."
-            echo "Please ensure that proxychains is properly configured before running this script."
-            echo "You can configure proxychains by editing the /etc/proxychains.conf file."
-            echo "Press Enter to continue..."
-            read
+        -p|--proxy)
+            USE_PROXY=1
             ;;
-        *) 
-            ;; # Ignore other arguments
+        --install-system-tmux)
+            INSTALL_SYSTEM_TMUX=1
+            ;;
+        -y|--yes)
+            ASSUME_YES=1
+            ;;
+        -h|--help)
+            echo "Usage: $0 [-p|--proxy] [--install-system-tmux] [-y|--yes]"
+            exit 0
+            ;;
+        *)
+            die "Unknown option: $1"
+            ;;
     esac
     shift
 done
 
-#Check if zsh is installed
-if [ ! -f /bin/zsh ]; then
-  echo "ZSH is not installed. Please install ZSH before continuing. Exiting..."
-  exit 1
+# Use the executing user's installed binary and its normal config lookup.
+# Do not override HOME, PROXYCHAINS_CONF_FILE, or the current directory.
+if (( USE_PROXY )); then
+  if proxy_binary=$(whence -p proxychains) || proxy_binary=$(whence -p proxychains4); then
+    PROXY_CMD=("$proxy_binary")
+  else
+    die "--proxy requires a locally installed proxychains or proxychains4 binary in PATH."
+  fi
+  echo "***Using $proxy_binary with its existing local configuration."
+  if (( ! ASSUME_YES )) && [[ -t 0 ]]; then
+    read -r "REPLY?Ensure ProxyChains is configured for your SOCKS proxy, then press Enter..." || exit 1
+  fi
+fi
+
+SYSTEM_CMD=()
+if (( INSTALL_SYSTEM_TMUX && EUID != 0 )); then
+  whence -p sudo >/dev/null || die "--install-system-tmux requires sudo or root privileges."
+  SYSTEM_CMD=(sudo)
 fi
 
 ### Install oh-my-zsh if it is not already installed
 if [ ! -d ~/.oh-my-zsh ]; then
-  echo "***Installing oh-my-zsh. If network access is blocked, install manually via proxychains or similar."
-  # Remove the below echo line if the RUNZSH=no option works as expected and prevents the installation script from spawning a new zsh session at the end of the installation process.
-  echo "Please rerun this script after installing oh-my-zsh."
-  # Retrieve ohmyzsh installation script. 
-  #Do not run a new zsh session at the end of the installation script to avoid closing the parent script.
-  RUNZSH=no sh -c "$($PROXY_PREFIX curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  echo "***Installing oh-my-zsh."
+  installer=$(mktemp "${TMPDIR:-/tmp}/initial-setup.XXXXXXXX") \
+    || die "Could not create a temporary installer file."
+  trap 'rm -f -- "$installer"' EXIT
+  # Keep ProxyChains banners out of the script; never run a partial download.
+  "${PROXY_CMD[@]}" curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o "$installer" \
+    || die "Could not download the Oh My Zsh installer."
+  [[ -s "$installer" ]] || die "The downloaded Oh My Zsh installer is empty."
+  # Wrap the installer too: its Git subprocesses must inherit ProxyChains.
+  RUNZSH=no CHSH=no KEEP_ZSHRC=yes "${PROXY_CMD[@]}" sh "$installer" \
+    || die "Oh My Zsh installation failed; configuration files were not copied."
 fi
 
-### Rename tmux config file at /etc/tmux.conf as a backup
-if [ -f /etc/tmux.conf ]; then
-  echo "***Renaming existing tmux config file at /etc/tmux.conf to /etc/tmux.conf.bkup"
-  cp /etc/tmux.conf /etc/tmux.conf.bkup
-else
-  echo "No existing tmux config file found at /etc/tmux.conf. Skipping rename."
+copy_config .tmux.conf "$HOME/.tmux.conf"
+
+### Only system-wide tmux installation needs elevated privileges.
+if (( INSTALL_SYSTEM_TMUX )); then
+  copy_config .tmux.conf /etc/tmux.conf "${SYSTEM_CMD[@]}"
 fi
 
-### Move config files into place
-echo "***Moving tmux config file into place"
-if [ -f .tmux.conf ]; then
-  cp .tmux.conf ~/.tmux.conf && echo "Copied .tmux.conf to ~/.tmux.conf"
-else
-  echo "File .tmux.conf does not exist. Skipping copy to ~/.tmux.conf."
-fi
-
-### Move tmux config file to /etc if it exists in the current directory
-echo "***Moving tmux config file to /etc"
-if [ -f .tmux.conf ]; then
-  cp .tmux.conf /etc/tmux.conf && echo "Copied .tmux.conf to /etc/tmux.conf"
-  echo "You may need to restart tmux for the changes to take effect."
-else
-  echo "File .tmux.conf does not exist. Skipping copy to /etc/tmux.conf."
-fi
-
-### Moving zsh config file in to place
-echo "***Moving zsh config file in to place"
-# Check if the .zshrc file exists before copying
-if [ -f .zshrc ]; then
-  cp .zshrc ~/.zshrc && echo "Copied .zshrc to ~/.zshrc"
-else
-  echo "File .zshrc does not exist. Skipping copy to ~/.zshrc."
-fi
-
-### Moving zsh theme file in to place
-echo "***Moving zsh theme file in to place"
-# Check if the theme file exists before copying
-if [ -f zach.zsh-theme ]; then
-  cp zach.zsh-theme ~/.oh-my-zsh/themes/zach.zsh-theme && echo "Copied zach.zsh-theme to ~/.oh-my-zsh/themes/zach.zsh-theme"
-else
-  echo "File zach.zsh-theme does not exist. Skipping copy to ~/.oh-my-zsh/themes/zach.zsh-theme."
-fi
+copy_config .zshrc "$HOME/.zshrc"
+copy_config zach.zsh-theme "$HOME/.oh-my-zsh/themes/zach.zsh-theme"
 
 ### Wait for user input before ending the script
 echo -e "\n***Setup complete! Please review the output above for any errors or warnings."
 echo -e "***You should now spawn a new ZSH session by typing:\nzsh\n"
-read -p "After reading the above, press Enter to exit the script..."
+if (( ! ASSUME_YES )) && [[ -t 0 ]]; then
+  read -r "REPLY?After reading the above, press Enter to exit the script..."
+fi
+exit 0

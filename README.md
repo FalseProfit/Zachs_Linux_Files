@@ -33,9 +33,11 @@ Use local overrides for values that differ by host instead of editing the shared
   - `GOROOT`
   - `GOPATH`
 - `initial_setup.sh` supports:
-  - `--proxy` to run the oh-my-zsh installer through `proxychains`
-  - `--install-system-tmux` to write `/etc/tmux.conf`
-  - `-y` to skip confirmations
+  - `-p` / `--proxy` to route both the Oh My Zsh installer download and the installer's Git traffic through the executing host's installed `proxychains` (or `proxychains4` when `proxychains` is absent). The binary uses its existing configuration; the script does not install ProxyChains or change its config. Configure the SOCKS endpoint and proxy DNS on that host beforehand. Proxy failures stop setup without falling back to direct downloads.
+  - `--install-system-tmux` to back up an existing `/etc/tmux.conf` and write the new one. Only these system copies use `sudo` when needed; run the script as your normal user to keep your user configuration and ProxyChains settings.
+  - `-y` / `--yes` to skip the script's prompts. Noninteractive runs also skip them. `sudo` may still require authentication when system tmux installation is requested.
+  - Run from the repository root, for example: `zsh initial_setup.sh --proxy -y`. Download or installation failures stop setup before the configuration files are copied.
+  - Existing configs are backed up beside the original before replacement, using names such as `.zshrc.bkup.20261103-143000.A1b2C3d4`. A unique suffix prevents backup collisions; backup failures stop setup before overwriting that config.
 - `gather_workpapers.sh` supports `ZJ_GATHER_SUBFOLDER` to rename the destination subfolder.
 
 ## Usage notes
