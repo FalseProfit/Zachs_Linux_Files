@@ -1,4 +1,7 @@
 #!/bin/zsh
+# Honor the script's interpreter even when launched with bash or sh.
+[ -n "${ZSH_VERSION:-}" ] || exec /bin/zsh "$0" "$@"
+
 PROXY_CMD=()
 USE_PROXY=0
 INSTALL_SYSTEM_TMUX=0
@@ -59,6 +62,20 @@ while [[ "$#" -gt 0 ]]; do
     esac
     shift
 done
+
+if (( EUID == 0 )) || [[ -n ${SUDO_USER:-} ]]; then
+  if (( EUID == 0 )); then
+    print -u2 -- "Warning: running setup as root${SUDO_USER:+ via sudo from $SUDO_USER}."
+  else
+    print -u2 -- "Warning: running setup via sudo from $SUDO_USER."
+  fi
+  print -u2 -- "Personal configs target HOME=$HOME. Normally run as the intended user; --install-system-tmux elevates only for /etc/tmux.conf and its backups."
+  print -u2 -- "Running as root is supported when you intend to configure root's account."
+  if (( ! ASSUME_YES )); then
+    printf 'Press Enter to continue or press Ctrl+C to exit the script... ' >&2
+    read -r REPLY || exit 1
+  fi
+fi
 
 # Use the executing user's installed binary and its normal config lookup.
 # Do not override HOME, PROXYCHAINS_CONF_FILE, or the current directory.
