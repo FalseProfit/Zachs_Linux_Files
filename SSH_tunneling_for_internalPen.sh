@@ -15,7 +15,7 @@ usage() {
     echo "  -i <path>: Identity file used only for remote host connections; disables password fallback"
     echo "  -o <port>: LOCAL-to-REMOTE SOCKS proxy port (default: 9999)"
     echo "  -I <port>: REMOTE-to-LOCAL SOCKS proxy port (default: 9050)"
-    echo "  -n <port>: Local port used to access remote Nessus (default: 8834)"
+    echo "  -n <port>: Local port used to access remote Nessus on port 8834 (default: 8834)"
     echo "  -R <port>: Port used on both ends when REMOTE accesses a LOCAL service (default: 8000)"
     echo
     echo "Tunnel selectors are:"
@@ -244,10 +244,10 @@ if [ "$LOCAL_TO_REMOTE_PROXY" -eq 1 ]; then
 fi
 
 if [ "$NESSUS" -eq 1 ]; then
-    # Map the remote Nessus port to the same port on the local machine.
+    # Map remote Nessus port 8834 to the selected local port.
     echo -e "\nCreating SSH tunnel to map the remote Nessus port to the local port:"
     print_remote_auth_reminder
-    run_ssh_command "Nessus" ssh -o ExitOnForwardFailure=yes "${REMOTE_SSH_AUTH_OPTIONS[@]}" -fNL "$N_PORT:127.0.0.1:$N_PORT" "$R_USER@$R_HOST"
+    run_ssh_command "Nessus" ssh -o ExitOnForwardFailure=yes "${REMOTE_SSH_AUTH_OPTIONS[@]}" -fNL "$N_PORT:127.0.0.1:8834" "$R_USER@$R_HOST"
 fi
 
 if [ "$REMOTE_TO_LOCAL" -eq 1 ]; then
