@@ -11,7 +11,7 @@ usage() {
     echo
     echo "Options are:"
     echo "  -U <user>: Username used to connect to the remote host (default: root)"
-    echo "  -u <user>: Username used to connect to 127.0.0.1 (default: root)"
+    echo "  -u <user>: Username used to connect to 127.0.0.1 (default: current user)"
     echo "  -i <path>: Identity file used only for remote host connections; disables password fallback"
     echo "  -o <port>: LOCAL-to-REMOTE SOCKS proxy port (default: 9999)"
     echo "  -I <port>: REMOTE-to-LOCAL SOCKS proxy port (default: 9050)"
@@ -48,7 +48,7 @@ R_PORT=8000
 # Default users. The local user is used only for the localhost SSH connection
 # created as part of the remote-to-local proxy tunnel.
 R_USER=root
-L_USER=root
+L_USER=$(id -un)
 
 # Supplying an identity file opts remote connections into public-key-only
 # authentication. The localhost connection keeps its normal SSH behavior.
